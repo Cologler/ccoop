@@ -9,3 +9,4 @@ Ccoop is my forked version of [Scoop](https://github.com/lukesampson/scoop).
 ### For Developers
 
 - Install Ccoop in editable mode;
+
