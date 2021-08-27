@@ -67,8 +67,10 @@ if ($global -and !(is_admin)) {
     abort 'ERROR: you need admin rights to install global apps'
 }
 
-if (is_scoop_outdated) {
+if (get_config 'autoupdate' $true -and is_scoop_outdated) {
     scoop update
+} else {
+    warn "Scoop is outdated."
 }
 
 if ($apps.length -eq 1) {
