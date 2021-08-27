@@ -1,3 +1,41 @@
+function Get-CommandName {
+    param (
+        [Parameter(Mandatory=$true)]
+        [System.IO.FileInfo] $file
+    )
+
+    return $file.BaseName.Substring('scoop-'.Length);
+}
+
+function Get-CommandFiles {
+    param (
+        [Switch] $Resolve
+    )
+
+    $filter = 'scoop-*.ps1'
+    $rv = @{}
+    $builtins = Get-ChildItem (relpath '..\libexec') -Filter $filter
+    $external = Get-ChildItem "$scoopdir\shims" -Filter $filter | ForEach-Object {
+        if ($Resolve) {
+            $fileContent = Get-Content $_.FullName
+            $line = $fileContent | Where-Object { $_.StartsWith('$path = join-path "$psscriptroot"') }
+            if ($line) {
+                $relpath = Invoke-Expression $line.Substring('$path = join-path "$psscriptroot"'.Length)
+                $abspath = Join-Path $(shimdir $false) $relpath -Resolve
+                return Get-Item $abspath
+            }
+        }
+        return $_
+    }
+    $builtins + $external | ForEach-Object {
+        $name = Get-CommandName $_
+        if (!$rv.ContainsKey($name)) {
+            $rv.Add($name, $_)
+        }
+    }
+    return $rv
+}
+
 function command_files {
     (Get-ChildItem (relpath '..\libexec')) `
         + (Get-ChildItem "$scoopdir\shims") `

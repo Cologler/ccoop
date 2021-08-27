@@ -22,12 +22,14 @@ function print_help($cmd) {
 function print_summaries {
     $commands = @{}
 
-    command_files | ForEach-Object {
-        $command = command_name $_
-        $summary = summary (Get-Content (command_path $command) -raw)
-        if(!($summary)) { $summary = '' }
+    $commandFiles = Get-CommandFiles -Resolve
+    $commandFiles.GetEnumerator() | ForEach-Object {
+        $summary = summary (Get-Content $_.Value.FullName -Raw)
+        if (!$summary) {
+            $summary = ''
+        }
 
-        $key = "$command "
+        $key = "$($_.Name) "
         if (!$commands.ContainsKey($key)) {
             $commands.Add($key, $summary)
         }
