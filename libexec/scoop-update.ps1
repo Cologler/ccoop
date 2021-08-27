@@ -62,12 +62,16 @@ function update_scoop() {
     if(!(Test-CommandAvailable git)) { abort "Scoop uses Git to update itself. Run 'scoop install git' and try again." }
 
     write-host "Updating Scoop..."
-    $last_update = $(last_scoop_update)
-    if ($null -eq $last_update) {$last_update = [System.DateTime]::Now}
-    $last_update = $last_update.ToString('s')
+
     $show_update_log = get_config 'show_update_log' $true
     $currentdir = fullpath $(versiondir 'scoop' 'current')
-    if (!(test-path "$currentdir\.git")) {
+
+    if ((Get-Item $currentdir).LinkType -eq 'SymbolicLink') {
+        # editable mode like python (pip install -e) or node (npm link)
+        # helpful for developer.
+        Write-Output "$ScoopName is installed in editable mode, update is ignored."
+    }
+    elseif (!(test-path "$currentdir\.git")) {
         $newdir = fullpath $(versiondir 'scoop' 'new')
 
         # get git scoop
@@ -81,7 +85,8 @@ function update_scoop() {
         # replace non-git scoop with the git version
         Remove-Item -r -force $currentdir -ea stop
         Move-Item $newdir $currentdir
-    } else {
+    }
+    else {
         Push-Location $currentdir
         try {
             $previousCommit = Invoke-Expression 'git rev-parse HEAD'
