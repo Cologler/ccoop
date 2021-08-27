@@ -53,9 +53,27 @@ function cleanup($app, $global, $verbose, $cache) {
     write-host ''
 }
 
+function Cleanup-Buckets {
+    Get-LocalBucket | ForEach-Object {
+        Write-Host "Cleanuping '$_' bucket..." -ForegroundColor Green
+        $bucketDirFullPath = Find-BucketDirectory $_ -Root
+        if (Test-Path "$bucketDirFullPath\.git" -PathType Container) {
+            Push-Location $bucketDirFullPath
+            try {
+                git_proxy_cmd gc --auto
+            }
+            finally {
+                Pop-Location
+            }
+        }
+    }
+}
+
+# cleanup all apps
 if ($apps) {
     $verbose = $true
     if ($apps -eq '*') {
+        Cleanup-Buckets
         $verbose = $false
         $apps = applist (installed_apps $false) $false
         if ($global) {
@@ -75,6 +93,8 @@ if ($apps) {
     if (!$verbose) {
         success 'Everything is shiny now!'
     }
+} else {
+    Cleanup-Buckets
 }
 
 exit 0
