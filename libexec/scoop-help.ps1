@@ -22,11 +22,17 @@ function print_help($cmd) {
 function print_summaries {
     $commands = @{}
 
-    command_files | ForEach-Object {
-        $command = command_name $_
-        $summary = summary (Get-Content (command_path $command) -raw)
-        if(!($summary)) { $summary = '' }
-        $commands.add("$command ", $summary) # add padding
+    $commandFiles = Get-CommandFiles -Resolve
+    $commandFiles.GetEnumerator() | ForEach-Object {
+        $summary = summary (Get-Content $_.Value.FullName -Raw)
+        if (!$summary) {
+            $summary = ''
+        }
+
+        $key = "$($_.Name) "
+        if (!$commands.ContainsKey($key)) {
+            $commands.Add($key, $summary)
+        }
     }
 
     $commands.getenumerator() | Sort-Object name | Format-Table -hidetablehead -autosize -wrap
