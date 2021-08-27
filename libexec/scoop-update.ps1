@@ -69,7 +69,7 @@ function update_scoop() {
     if ((Get-Item $currentdir).LinkType -eq 'SymbolicLink') {
         # editable mode like python (pip install -e) or node (npm link)
         # helpful for developer.
-        Write-Output "$PkgMgrName is installed in editable mode, update is ignored."
+        Write-Output "$ScoopName is installed in editable mode, update is ignored."
     }
     elseif (!(test-path "$currentdir\.git")) {
         $newdir = fullpath $(versiondir 'scoop' 'new')
