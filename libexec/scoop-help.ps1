@@ -26,7 +26,11 @@ function print_summaries {
         $command = command_name $_
         $summary = summary (Get-Content (command_path $command) -raw)
         if(!($summary)) { $summary = '' }
-        $commands.add("$command ", $summary) # add padding
+
+        $key = "$command "
+        if (!$commands.ContainsKey($key)) {
+            $commands.Add($key, $summary)
+        }
     }
 
     $commands.getenumerator() | Sort-Object name | Format-Table -hidetablehead -autosize -wrap
