@@ -16,10 +16,16 @@ $needs_update = $false
 
 if(test-path "$currentdir\.git") {
     Push-Location $currentdir
-    git_fetch -q origin
-    $commits = $(git log "HEAD..origin/$(scoop config SCOOP_BRANCH)" --oneline)
-    if($commits) { $needs_update = $true }
-    Pop-Location
+    try {
+        git_fetch -q origin
+        $commits = $(git log "HEAD..origin/$(scoop config SCOOP_BRANCH)" --oneline)
+        if ($commits) {
+            $needs_update = $true
+        }
+    }
+    finally {
+        Pop-Location
+    }
 }
 else {
     $needs_update = $true
