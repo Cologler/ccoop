@@ -1,5 +1,13 @@
 . "$PSScriptRoot\constants.ps1"
 
+function ToBoolean($value) {
+    if ($value) {
+        return $true;
+    } else {
+        return $false;
+    }
+}
+
 function Optimize-SecurityProtocol {
     # .NET Framework 4.7+ has a default security protocol called 'SystemDefault',
     # which allows the operating system to choose the best protocol to use.
@@ -548,35 +556,119 @@ function warn_on_overwrite($shim_ps1, $path) {
     warn "Overwriting shim to $filename installed from $shim_app"
 }
 
+function New-Shim {
+    param (
+        [parameter(Mandatory=$true)]
+        [string] $targetFile,
+        [parameter(Mandatory=$true)]
+        [string] $location,
+        [string] $name,
+        [string[]] $arguments,
+
+        # format
+        [switch] $ps1,
+
+        # options
+        [switch] $standalone
+    )
+
+    if (!(Test-Path $targetFile -PathType Leaf)) {
+        abort "Can't shim '$(fname $targetFile)': couldn't find '$targetFile'."
+        return
+    }
+
+    if (!(Test-Path $location -PathType Container)) {
+        New-Item -path $location -type directory -force > $null
+    }
+
+    $targetFileAbsPath = Resolve-Path $targetFile
+
+    Push-Location $location
+    try {
+        $targetFileRelPath = Resolve-Path $targetFileAbsPath -Relative
+    } finally {
+        Pop-Location
+    }
+
+    if (!$name) {
+        $name = [System.IO.Path]::GetFileNameWithoutExtension($targetFile)
+    }
+
+    $shimPrefix = "$location\$($name.ToLower())"
+
+    if ($ps1) {
+        $shim_ps1 = "$shimPrefix.ps1"
+        warn_on_overwrite $shim_ps1 $targetFile
+
+        $ps1sb = New-Object System.Text.StringBuilder
+
+        # if $path points to another drive resolve-path prepends .\ which could break shims
+        if ($targetFileRelPath -match "^(.\\[\w]:).*$") {
+            $ps1sb.AppendLine("`$path = `"$targetFile`"") > $null
+        } else {
+            # Setting PSScriptRoot in Shim if it is not defined, so the shim doesn't break in PowerShell 2.0
+            $ps1sb.
+                AppendLine("if (!(Test-Path Variable:PSScriptRoot)) {").
+                AppendLine("    `$PSScriptRoot = Split-Path `$MyInvocation.MyCommand.Path -Parent").
+                AppendLine("}").
+                AppendLine("`$path = Join-Path `"`$psscriptroot`" `"$targetFileRelPath`"") > $null
+        }
+
+        if ($arguments) {
+            $ps1args = $arguments | ForEach-Object { "`"$_`"" }
+            $ps1scmd = "`$path $ps1args @args"
+        } else {
+            $ps1scmd = "`$path @args"
+        }
+
+        if ($standalone -and $targetFile -match '\.ps1$') {
+            # on standalone mode, we should start a new powershell to run the script.
+            # when scoop run in standalone mode, the output can pipe to other cli program.
+            $ps1sb.
+                AppendLine("if (`$PSVersionTable.PSVersion.Major -ge 6) {").
+                AppendLine("    `$shellPath = Join-Path `"`$PSHOME/`" 'pwsh.exe'").
+                AppendLine("} else {").
+                AppendLine("    `$shellPath = Join-Path `"`$PSHOME/`" 'powershell.exe'").
+                AppendLine("}") > $null
+
+            $ps1exec = "`$shellPath $ps1scmd"
+        }
+        elseif ($targetFile -match '\.jar$') {
+            $ps1exec = "java -jar $ps1scmd"
+        }
+        else {
+            $ps1exec = $ps1scmd
+        }
+
+        $ps1sb.
+            AppendLine("if (`$myinvocation.expectingInput) {").
+            AppendLine("    `$input | & $ps1exec").
+            AppendLine("} else {").
+            AppendLine("    & $ps1exec").
+            AppendLine("}") > $null
+
+        $ps1sb.ToString() | Out-File $shim_ps1 -encoding utf8
+    }
+}
+
 function shim($path, $global, $name, $arg) {
     if(!(test-path $path)) { abort "Can't shim '$(fname $path)': couldn't find '$path'." }
     $abs_shimdir = ensure (shimdir $global)
+
+    New-Shim $path $abs_shimdir `
+        -name $name `
+        -arguments $arg`
+        -ps1
+
     if(!$name) { $name = strip_ext (fname $path) }
 
     $shim = "$abs_shimdir\$($name.tolower())"
-
-    warn_on_overwrite "$shim.ps1" $path
 
     # convert to relative path
     Push-Location $abs_shimdir
     $relative_path = resolve-path -relative $path
     Pop-Location
     $resolved_path = resolve-path $path
-
-    # if $path points to another drive resolve-path prepends .\ which could break shims
-    if($relative_path -match "^(.\\[\w]:).*$") {
-        write-output "`$path = `"$path`"" | out-file "$shim.ps1" -encoding utf8
-    } else {
-        # Setting PSScriptRoot in Shim if it is not defined, so the shim doesn't break in PowerShell 2.0
-        Write-Output "if (!(Test-Path Variable:PSScriptRoot)) { `$PSScriptRoot = Split-Path `$MyInvocation.MyCommand.Path -Parent }" | Out-File "$shim.ps1" -Encoding utf8
-        write-output "`$path = join-path `"`$psscriptroot`" `"$relative_path`"" | out-file "$shim.ps1" -Encoding utf8 -Append
-    }
-
-    if($path -match '\.jar$') {
-        "if(`$myinvocation.expectingInput) { `$input | & java -jar `$path $arg @args } else { & java -jar `$path $arg @args }" | out-file "$shim.ps1" -encoding utf8 -append
-    } else {
-        "if(`$myinvocation.expectingInput) { `$input | & `$path $arg @args } else { & `$path $arg @args }" | out-file "$shim.ps1" -encoding utf8 -append
-    }
 
     if($path -match '\.(exe|com)$') {
         # for programs with no awareness of any shell
