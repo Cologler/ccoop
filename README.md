@@ -9,6 +9,7 @@ Ccoop is my forked version of [Scoop](https://github.com/lukesampson/scoop).
 - `scoop list --json` write json to stdout;
 - use `scoop config autoupdate false` to disable auto update;
 - Auto uninstall if package install failed when you install it again;
+- Pipe `scoop list` to `grep` or `ripgrep`;
 
 ### For Developers
 
