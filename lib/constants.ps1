@@ -2,3 +2,5 @@
 $ScoopName = 'Scoop'
 
 $ScoopOutdated_Hours = 6
+
+$ScoopNames = @('Scoop', 'Ccoop')
