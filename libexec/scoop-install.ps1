@@ -105,7 +105,7 @@ $appStatus = $appNames | ForEach-Object { Get-AppInstallStatus $_ $global }
 # remove all installed failed apps
 $appStatus | ForEach-Object {
     if ($_.isInstallFailed) {
-        error "It looks like a previous installation of $app failed. Uninstall $app now..."
+        error "It looks like a previous installation of $($_.name) failed. Uninstall $($_.name) now..."
         $command = "scoop uninstall $($_.name)"
         if ($global) { $command += ' --global' }
         Invoke-Expression -Command $command
