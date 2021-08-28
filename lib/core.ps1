@@ -657,7 +657,7 @@ function shim($path, $global, $name, $arg) {
 
     New-Shim $path $abs_shimdir `
         -name $name `
-        -arguments $arg`
+        -arguments $arg `
         -ps1
 
     if(!$name) { $name = strip_ext (fname $path) }
