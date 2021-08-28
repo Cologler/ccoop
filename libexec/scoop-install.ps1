@@ -30,6 +30,31 @@
 
 reset_aliases
 
+function Get-AppName([string] $name) {
+    if ($name.EndsWith('.json')) {
+        $name = [System.IO.Path]::GetFileNameWithoutExtension($name)
+    }
+
+    return $name.ToLower();
+}
+
+function Get-AppInstallStatus([string] $name, [bool] $global) {
+    if (!$name) {
+        throw "You must specify an app name"
+    }
+
+    $appName = Get-AppName $name
+    $app = @{
+        name = $appName
+    }
+    $app.isInstalled = installed $appName $global
+    if ($app.isInstalled) {
+        $app.version = @(versions $appName $global)[-1]
+        $app.isInstallFailed = !(install_info $appName $app.version $global)
+    }
+    return $app
+}
+
 function is_installed($app, $global) {
     if ($app.EndsWith('.json')) {
         $app = [System.IO.Path]::GetFileNameWithoutExtension($app)
@@ -47,7 +72,7 @@ function is_installed($app, $global) {
     return $false
 }
 
-$opt, $apps, $err = getopt $args 'gfiksa:' 'global', 'force', 'independent', 'no-cache', 'skip', 'arch='
+$opt, $appNames, $err = getopt $args 'gfiksa:' 'global', 'force', 'independent', 'no-cache', 'skip', 'arch='
 if ($err) { "scoop install: $err"; exit 1 }
 
 $global = $opt.g -or $opt.global
@@ -61,34 +86,50 @@ try {
     abort "ERROR: $_"
 }
 
-if (!$apps) { error '<app> missing'; my_usage; exit 1 }
+if (!$appNames) { error '<app> missing'; my_usage; exit 1 }
 
 if ($global -and !(is_admin)) {
     abort 'ERROR: you need admin rights to install global apps'
 }
 
 if (is_scoop_outdated) {
-    scoop update
+    if (get_config 'autoupdate' $true) {
+        scoop update
+    } else {
+        warn "Scoop is outdated."
+    }
 }
 
-if ($apps.length -eq 1) {
-    $app, $null, $version = parse_app $apps
+$appStatus = $appNames | ForEach-Object { Get-AppInstallStatus $_ $global }
+
+# remove all installed failed apps
+$appStatus | ForEach-Object {
+    if ($_.isInstallFailed) {
+        error "It looks like a previous installation of $app failed. Uninstall $app now..."
+        $command = "scoop uninstall $($_.name)"
+        if ($global) { $command += ' --global' }
+        Invoke-Expression -Command $command
+    }
+}
+
+if ($appNames.length -eq 1) {
+    $app, $null, $version = parse_app $appNames
     if ($null -eq $version -and (is_installed $app $global)) {
         return
     }
 }
 
 # get any specific versions that we need to handle first
-$specific_versions = $apps | Where-Object {
+$specific_versions = $appNames | Where-Object {
     $null, $null, $version = parse_app $_
     return $null -ne $version
 }
 
 # compare object does not like nulls
 if ($specific_versions.length -gt 0) {
-    $difference = Compare-Object -ReferenceObject $apps -DifferenceObject $specific_versions -PassThru
+    $difference = Compare-Object -ReferenceObject $appNames -DifferenceObject $specific_versions -PassThru
 } else {
-    $difference = $apps
+    $difference = $appNames
 }
 
 $specific_versions_paths = $specific_versions | ForEach-Object {
@@ -99,18 +140,18 @@ $specific_versions_paths = $specific_versions | ForEach-Object {
 
     generate_user_manifest $app $bucket $version
 }
-$apps = @(($specific_versions_paths + $difference) | Where-Object { $_ } | Sort-Object -Unique)
+$appNames = @(($specific_versions_paths + $difference) | Where-Object { $_ } | Sort-Object -Unique)
 
 # remember which were explictly requested so that we can
 # differentiate after dependencies are added
-$explicit_apps = $apps
+$explicit_apps = $appNames
 
 if (!$independent) {
-    $apps = install_order $apps $architecture # adds dependencies
+    $appNames = install_order $appNames $architecture # adds dependencies
 }
-ensure_none_failed $apps $global
+ensure_none_failed $appNames $global
 
-$apps, $skip = prune_installed $apps $global
+$appNames, $skip = prune_installed $appNames $global
 
 $skip | Where-Object { $explicit_apps -contains $_ } | ForEach-Object {
     $app, $null, $null = parse_app $_
@@ -123,7 +164,7 @@ if (Test-Aria2Enabled) {
     warn "Scoop uses 'aria2c' for multi-connection downloads."
     warn "Should it cause issues, run 'scoop config aria2-enabled false' to disable it."
 }
-$apps | ForEach-Object { install_app $_ $architecture $global $suggested $use_cache $check_hash }
+$appNames | ForEach-Object { install_app $_ $architecture $global $suggested $use_cache $check_hash }
 
 show_suggestions $suggested
 

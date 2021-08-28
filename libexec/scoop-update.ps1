@@ -301,8 +301,13 @@ if (!$apps) {
     }
 
     if (is_scoop_outdated) {
-        update_scoop
+        if (get_config 'autoupdate' $true) {
+            update_scoop
+        } else {
+            warn "Scoop is outdated."
+        }
     }
+
     $outdated = @()
     $apps_param = $apps
 

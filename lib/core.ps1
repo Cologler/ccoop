@@ -1,5 +1,4 @@
-# the package manager name, will be rename to 'ccoop' in the future
-$ScoopName = 'Scoop'
+. "$PSScriptRoot\constants.ps1"
 
 function Optimize-SecurityProtocol {
     # .NET Framework 4.7+ has a default security protocol called 'SystemDefault',
@@ -850,7 +849,7 @@ function is_scoop_outdated() {
         # enforce an update for the first time
         return $true
     }
-    return $last_update.AddHours(3) -lt $now.ToLocalTime()
+    return $last_update.AddHours($ScoopOutdated_Hours) -lt $now.ToLocalTime()
 }
 
 function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
