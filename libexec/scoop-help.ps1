@@ -22,9 +22,9 @@ function print_help($cmd) {
 function print_summaries {
     $commands = @{}
 
-    $commandFiles = Get-ScoopCommandFiles -Resolve
-    $commandFiles.GetEnumerator() | ForEach-Object {
-        $summary = summary (Get-Content $_.Value.FullName -Raw)
+    $commandFiles = Convert-ScoopCommandsInfoArrayToHashtable (Get-ScoopCommandsInfoArray -ResolveTarget)
+    $commandFiles.Values | ForEach-Object {
+        $summary = summary (Get-Content $_.TargetFile.FullName -Raw)
         if (!$summary) {
             $summary = ''
         }

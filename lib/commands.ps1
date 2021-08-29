@@ -6,6 +6,7 @@ if (Get-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -ErrorAction 
 }
 
 # start:
+. "$PSScriptRoot\shim"
 
 function Get-ScoopCommandName {
     param (
@@ -16,28 +17,54 @@ function Get-ScoopCommandName {
     return $file.BaseName.Substring('scoop-'.Length);
 }
 
-function Get-ScoopCommandFiles {
+function Get-ScoopCommandsInfoArray {
     param (
-        [Switch] $Resolve
+        [Switch] $ResolveTarget
     )
 
     $filter = 'scoop-*.ps1'
-    $rv = @{}
-    $builtins = Get-ChildItem (relpath '..\libexec') -Filter $filter
+
+    $builtins = Get-ChildItem (relpath '..\libexec') -Filter $filter | ForEach-Object {
+        return @{
+            File = $_
+            IsBuiltin = $true
+        }
+    }
+
     $external = Get-ChildItem "$scoopdir\shims" -Filter $filter | ForEach-Object {
-        if ($Resolve) {
-            $fileContent = Get-Content $_.FullName
-            $line = $fileContent | Where-Object { $_.StartsWith('$path = join-path "$psscriptroot"') }
-            if ($line) {
-                $relpath = Invoke-Expression $line.Substring('$path = join-path "$psscriptroot"'.Length)
-                $abspath = Join-Path $(shimdir $false) $relpath -Resolve
-                return Get-Item $abspath
+        return @{
+            File = $_
+            IsExternal = $true
+        }
+    }
+
+    return $builtins + $external | foreach-object {
+        # parse name before resolve
+        $_.Name = Get-ScoopCommandName $_.File.FullName
+
+        if ($ResolveTarget) {
+            if ($_.IsBuiltin) {
+                $_.TargetFile = $_.file
+            }
+            elseif ($_.IsExternal) {
+                $_.TargetFile = Get-ScoopShimTarget $_.File.FullName
             }
         }
+
         return $_
     }
-    $builtins + $external | ForEach-Object {
-        $name = Get-ScoopCommandName $_
+}
+
+function Convert-ScoopCommandsInfoArrayToHashtable {
+    param (
+        [ValidateNotNullOrEmpty()]
+        [hashtable[]]
+        $array
+    )
+
+    $rv = @{}
+    $array | ForEach-Object {
+        $name = $_.name
         if (!$rv.ContainsKey($name)) {
             $rv.Add($name, $_)
         }
