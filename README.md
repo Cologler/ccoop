@@ -23,6 +23,7 @@ They have high priority.
 ### Fixes
 
 - Won't remove all package when you run `scoop uninstall .`;
+- Won't remove current version package when you run `scoop cleanup .`;
 
 ### Performance
 
