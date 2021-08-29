@@ -659,6 +659,28 @@ function New-Shim {
     }
 }
 
+function New-ScoopShimToScoop([string] $name, [bool] $global) {
+    if (!$name) {
+        $name = $ScoopName
+    }
+    elseif (!($ScoopNames -contains $app)) {
+        throw "This function only work for $ScoopNames"
+    }
+
+    $name = $name.ToLower()
+    $target = [System.IO.Path]::Combine(
+        $(versiondir $name 'current'),
+        'bin',
+        "$name.ps1"
+    )
+    $shimdir = shimdir $global
+
+    New-Shim $target $shimdir `
+        -name $name `
+        -standalone `
+        -ps1
+}
+
 function shim($path, $global, $name, $arg) {
     if(!(test-path $path)) { abort "Can't shim '$(fname $path)': couldn't find '$path'." }
     $abs_shimdir = ensure (shimdir $global)

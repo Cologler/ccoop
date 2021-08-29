@@ -26,17 +26,7 @@ if($apps -eq '*') {
 
 function ResetScoop([string] $app, [bool] $global) {
     # does scoop able install to global?
-    $target = [System.IO.Path]::Combine(
-        $(versiondir $app 'current'),
-        'bin',
-        "$app.ps1"
-    )
-    $shimdir = shimdir $global
-
-    New-Shim $target $shimdir `
-        -name $app `
-        -standalone `
-        -ps1
+    New-ScoopShimToScoop -name $app -global $global
 }
 
 $apps | ForEach-Object {

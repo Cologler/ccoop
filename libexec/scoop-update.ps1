@@ -135,7 +135,7 @@ function update_scoop() {
     }
 
     ensure_scoop_in_path
-    shim "$currentdir\bin\scoop.ps1" $false
+    New-ScoopShimToScoop
 
     Get-LocalBucket | ForEach-Object {
         write-host "Updating '$_' bucket..."
