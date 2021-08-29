@@ -13,6 +13,13 @@ Ccoop is my forked version of [Scoop](https://github.com/lukesampson/scoop).
 - Auto uninstall if package install failed when you install it again;
 - Able to pipe `scoop list` to `grep` or `ripgrep`;
 
+#### Dispatch External First
+
+When you install `scoop-*` like packages ([scoop-search](https://github.com/tokiedokie/scoop-search)),
+you can use `scoop *` to call them now.
+
+They have high priority.
+
 ### Performance
 
 - Ccoop is faster, because it only run scripts (like `core.ps1`) once;
