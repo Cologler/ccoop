@@ -1,4 +1,19 @@
-. "$PSScriptRoot\constants.ps1"
+# the core.ps1 does not allow to reference other script
+# because it run via install scoop script
+
+# ensure only run once:
+if (Get-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -ErrorAction SilentlyContinue) {
+    exit
+} else {
+    Set-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -Value $true
+}
+
+# constants part
+# the package manager name, will be rename to 'ccoop' in the future
+$ScoopName = 'Scoop'
+$ScoopOutdated_Hours = 6
+$ScoopNames = @('Scoop', 'Ccoop')
+
 
 function ToBoolean($value) {
     if ($value) {
@@ -649,6 +664,28 @@ function New-Shim {
 
         $ps1sb.ToString() | Out-File $shim_ps1 -encoding utf8
     }
+}
+
+function New-ScoopShimToScoop([string] $name, [bool] $global) {
+    if (!$name) {
+        $name = $ScoopName
+    }
+    elseif (!($ScoopNames -contains $app)) {
+        throw "This function only work for $ScoopNames"
+    }
+
+    $name = $name.ToLower()
+    $target = [System.IO.Path]::Combine(
+        $(versiondir $name 'current'),
+        'bin',
+        "$name.ps1"
+    )
+    $shimdir = shimdir $global
+
+    New-Shim $target $shimdir `
+        -name $name `
+        -standalone `
+        -ps1
 }
 
 function shim($path, $global, $name, $arg) {

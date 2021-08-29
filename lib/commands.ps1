@@ -1,4 +1,14 @@
-function Get-CommandName {
+# ensure only run once:
+if (Get-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -ErrorAction SilentlyContinue) {
+    exit
+} else {
+    Set-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -Value $true
+}
+
+# start:
+. "$PSScriptRoot\shim"
+
+function Get-ScoopCommandName {
     param (
         [Parameter(Mandatory=$true)]
         [System.IO.FileInfo] $file
@@ -7,33 +17,96 @@ function Get-CommandName {
     return $file.BaseName.Substring('scoop-'.Length);
 }
 
-function Get-CommandFiles {
+function Get-ScoopCommandsInfoArray {
     param (
-        [Switch] $Resolve
+        # include
+        [Switch] $IncludeBuiltins,
+        [Switch] $IncludeExternal,
+
+        # optional peoperties
+        [Switch] $ResolveTarget,
+
+        # options
+        [switch] $ExternalFirst
     )
 
+    if (!$IncludeBuiltins -and !$IncludeExternal) {
+        $IncludeBuiltins = $true
+        $IncludeExternal = $true
+    }
+
     $filter = 'scoop-*.ps1'
-    $rv = @{}
-    $builtins = Get-ChildItem (relpath '..\libexec') -Filter $filter
-    $external = Get-ChildItem "$scoopdir\shims" -Filter $filter | ForEach-Object {
-        if ($Resolve) {
-            $fileContent = Get-Content $_.FullName
-            $line = $fileContent | Where-Object { $_.StartsWith('$path = join-path "$psscriptroot"') }
-            if ($line) {
-                $relpath = Invoke-Expression $line.Substring('$path = join-path "$psscriptroot"'.Length)
-                $abspath = Join-Path $(shimdir $false) $relpath -Resolve
-                return Get-Item $abspath
+
+    if ($IncludeBuiltins) {
+        $builtins = Get-ChildItem (relpath '..\libexec') -Filter $filter | ForEach-Object {
+            return @{
+                File = $_
+                IsBuiltin = $true
             }
         }
+    } else {
+        $builtins = @()
+    }
+
+    if ($IncludeExternal) {
+        $external = Get-ChildItem "$scoopdir\shims" -Filter $filter | ForEach-Object {
+            return @{
+                File = $_
+                IsExternal = $true
+            }
+        }
+    } else {
+        $external = @()
+    }
+
+    if ($ExternalFirst) {
+        $all = $external + $builtins
+    } else {
+        $all = $builtins + $external
+    }
+
+    return $all | foreach-object {
+        # parse name before resolve
+        $_.Name = Get-ScoopCommandName $_.File
+
+        if ($ResolveTarget) {
+            if ($_.IsBuiltin) {
+                $_.TargetFile = $_.file
+            }
+            elseif ($_.IsExternal) {
+                $_.TargetFile = Get-ScoopShimTarget $_.File
+            }
+        }
+
         return $_
     }
-    $builtins + $external | ForEach-Object {
-        $name = Get-CommandName $_
+}
+
+function Convert-ScoopCommandsInfoArrayToHashtable {
+    param (
+        [ValidateNotNullOrEmpty()]
+        [hashtable[]]
+        $array
+    )
+
+    $rv = @{}
+    $array | ForEach-Object {
+        $name = $_.name
         if (!$rv.ContainsKey($name)) {
             $rv.Add($name, $_)
         }
     }
     return $rv
+}
+
+function Invoke-ScoopCommand {
+    param (
+        [Parameter(Mandatory=$true)]
+        [Hashtable] $CommandsInfo,
+        [string[]] $Arguments
+    )
+
+    & $CommandsInfo.File.FullName @arguments
 }
 
 function command_files {
