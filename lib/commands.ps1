@@ -1,4 +1,4 @@
-function Get-CommandName {
+function Get-ScoopCommandName {
     param (
         [Parameter(Mandatory=$true)]
         [System.IO.FileInfo] $file
@@ -7,7 +7,7 @@ function Get-CommandName {
     return $file.BaseName.Substring('scoop-'.Length);
 }
 
-function Get-CommandFiles {
+function Get-ScoopCommandFiles {
     param (
         [Switch] $Resolve
     )
@@ -28,7 +28,7 @@ function Get-CommandFiles {
         return $_
     }
     $builtins + $external | ForEach-Object {
-        $name = Get-CommandName $_
+        $name = Get-ScoopCommandName $_
         if (!$rv.ContainsKey($name)) {
             $rv.Add($name, $_)
         }
