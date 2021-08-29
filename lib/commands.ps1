@@ -102,11 +102,11 @@ function Convert-ScoopCommandsInfoArrayToHashtable {
 function Invoke-ScoopCommand {
     param (
         [Parameter(Mandatory=$true)]
-        [Hashtable] $CommandsInfo,
+        [Hashtable] $CommandInfo,
         [string[]] $Arguments
     )
 
-    & $CommandsInfo.File.FullName @arguments
+    & $CommandInfo.File.FullName @arguments
 }
 
 function command_files {
