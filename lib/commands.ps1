@@ -1,3 +1,12 @@
+# ensure only run once:
+if (Get-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -ErrorAction SilentlyContinue) {
+    exit
+} else {
+    Set-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -Value $true
+}
+
+# start:
+
 function Get-ScoopCommandName {
     param (
         [Parameter(Mandatory=$true)]
