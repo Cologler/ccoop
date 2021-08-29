@@ -10,6 +10,10 @@ set-strictmode -off
 
 reset_aliases
 
+$commandsInfoMap = Convert-ScoopCommandsInfoArrayToHashtable (
+    Get-ScoopCommandsInfoArray -ResolveTarget -ExternalFirst
+)
+
 $commands = commands
 if ('--version' -contains $cmd -or (!$cmd -and '-v' -contains $args)) {
     Push-Location $(versiondir 'scoop' 'current')
@@ -29,5 +33,8 @@ if ('--version' -contains $cmd -or (!$cmd -and '-v' -contains $args)) {
     }
 }
 elseif (@($null, '--help', '/?') -contains $cmd -or $args[0] -contains '-h') { exec 'help' $args }
+elseif ($commandsInfoMap.ContainsKey($cmd)) {
+    Invoke-ScoopCommand $commandsInfoMap[$cmd] $args
+}
 elseif ($commands -contains $cmd) { exec $cmd $args }
 else { "scoop: '$cmd' isn't a scoop command. See 'scoop help'."; exit 1 }

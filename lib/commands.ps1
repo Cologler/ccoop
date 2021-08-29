@@ -19,26 +19,53 @@ function Get-ScoopCommandName {
 
 function Get-ScoopCommandsInfoArray {
     param (
-        [Switch] $ResolveTarget
+        # include
+        [Switch] $IncludeBuiltins,
+        [Switch] $IncludeExternal,
+
+        # optional peoperties
+        [Switch] $ResolveTarget,
+
+        # options
+        [switch] $ExternalFirst
     )
+
+    if (!$IncludeBuiltins -and !$IncludeExternal) {
+        $IncludeBuiltins = $true
+        $IncludeExternal = $true
+    }
 
     $filter = 'scoop-*.ps1'
 
-    $builtins = Get-ChildItem (relpath '..\libexec') -Filter $filter | ForEach-Object {
-        return @{
-            File = $_
-            IsBuiltin = $true
+    if ($IncludeBuiltins) {
+        $builtins = Get-ChildItem (relpath '..\libexec') -Filter $filter | ForEach-Object {
+            return @{
+                File = $_
+                IsBuiltin = $true
+            }
         }
+    } else {
+        $builtins = @()
     }
 
-    $external = Get-ChildItem "$scoopdir\shims" -Filter $filter | ForEach-Object {
-        return @{
-            File = $_
-            IsExternal = $true
+    if ($IncludeExternal) {
+        $external = Get-ChildItem "$scoopdir\shims" -Filter $filter | ForEach-Object {
+            return @{
+                File = $_
+                IsExternal = $true
+            }
         }
+    } else {
+        $external = @()
     }
 
-    return $builtins + $external | foreach-object {
+    if ($ExternalFirst) {
+        $all = $external + $builtins
+    } else {
+        $all = $builtins + $external
+    }
+
+    return $all | foreach-object {
         # parse name before resolve
         $_.Name = Get-ScoopCommandName $_.File
 
@@ -70,6 +97,16 @@ function Convert-ScoopCommandsInfoArrayToHashtable {
         }
     }
     return $rv
+}
+
+function Invoke-ScoopCommand {
+    param (
+        [Parameter(Mandatory=$true)]
+        [Hashtable] $CommandsInfo,
+        [string[]] $Arguments
+    )
+
+    & $CommandsInfo.File.FullName @arguments
 }
 
 function command_files {
