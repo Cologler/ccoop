@@ -1,4 +1,12 @@
-. "$PSScriptRoot\constants.ps1"
+# the core.ps1 does not allow to reference other script
+# because it run via install scoop script
+
+# constants part
+# the package manager name, will be rename to 'ccoop' in the future
+$ScoopName = 'Scoop'
+$ScoopOutdated_Hours = 6
+$ScoopNames = @('Scoop', 'Ccoop')
+
 
 function ToBoolean($value) {
     if ($value) {
