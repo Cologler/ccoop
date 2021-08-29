@@ -29,6 +29,10 @@ function print_summaries {
             $summary = ''
         }
 
+        if ($_.IsExternal) {
+            $summary = "(E) $summary"
+        }
+
         $key = "$($_.Name) "
         if (!$commands.ContainsKey($key)) {
             $commands.Add($key, $summary)
