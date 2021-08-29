@@ -8,24 +8,14 @@ param($cmd)
 
 reset_aliases
 
-function print_help($cmd) {
-    $file = Get-Content (command_path $cmd) -raw
+$commandsInfoMap = Convert-ScoopCommandsInfoArrayToHashtable (
+    Get-ScoopCommandsInfoArray -ResolveTarget -ExternalFirst
+)
 
-    $usage = usage $file
-    $summary = summary $file
-    $help = scoop_help $file
-
-    if($usage) { "$usage`n" }
-    if($help) { $help }
-}
-
-function print_summaries {
+function Get-ScoopSummaries {
     $commands = @{}
 
-    $commandFiles = Convert-ScoopCommandsInfoArrayToHashtable (
-        Get-ScoopCommandsInfoArray -ResolveTarget -ExternalFirst
-    )
-    $commandFiles.Values | ForEach-Object {
+    $commandsInfoMap.Values | ForEach-Object {
         $summary = summary (Get-Content $_.TargetFile.FullName -Raw)
         if (!$summary) {
             $summary = ''
@@ -41,20 +31,40 @@ function print_summaries {
         }
     }
 
-    $commands.getenumerator() | Sort-Object name | Format-Table -hidetablehead -autosize -wrap
+    $commands.GetEnumerator() | Sort-Object name | Format-Table -hidetablehead -autosize -wrap
+}
+
+function Get-ScoopHelp($CommandInfo) {
+    $file = Get-Content $CommandInfo.TargetFile.FullName -Raw
+
+    $usage = usage $file
+    $summary = summary $file
+    $help = scoop_help $file
+
+    if ($usage) {
+        "$usage`n"
+    }
+    if ($help) {
+        $help
+    }
 }
 
 $commands = commands
 
-if(!($cmd)) {
-    "Usage: scoop <command> [<args>]
+if (-not $cmd) {
+    Write-Output 'Usage: scoop <command> [<args>]'
+    Write-Output ''
+    Write-Output 'Some useful commands are:'
 
-Some useful commands are:"
-    print_summaries
-    "Type 'scoop help <command>' to get help for a specific command."
-} elseif($commands -contains $cmd) {
-    print_help $cmd
-} else {
+    Get-ScoopSummaries | Out-Default
+
+    Write-Output "Type 'scoop help <command>' to get help for a specific command."
+
+}
+elseif ($commandsInfoMap.ContainsKey($cmd)) {
+    Get-ScoopHelp $commandsInfoMap[$cmd] | Out-Default
+}
+else {
     "scoop help: no such command '$cmd'"; exit 1
 }
 

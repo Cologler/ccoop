@@ -793,28 +793,46 @@ function Confirm-InstallationStatus {
         $Global
     )
     $Installed = @()
-    $Apps | Select-Object -Unique | Where-Object { $_.Name -ne 'scoop' } | ForEach-Object {
-        $App, $null, $null = parse_app $_
-        if ($Global) {
-            if (installed $App $true) {
-                $Installed += ,@($App, $true)
-            } elseif (installed $App $false) {
-                error "'$App' isn't installed globally, but it is installed for your account."
-                warn "Try again without the --global (or -g) flag instead."
-            } else {
-                error "'$App' isn't installed."
+    $Apps |
+        Select-Object -Unique |
+        Where-Object { $ScoopNames -notcontains $_ } |
+        ForEach-Object {
+            $App, $null, $null = parse_app $_
+
+            if (!(Test-IsValidScoopAppName $App)) {
+                abort "$App is not a package."
+                throw
             }
-        } else {
-            if(installed $App $false) {
-                $Installed += ,@($App, $false)
-            } elseif (installed $App $true) {
-                error "'$App' isn't installed for your account, but it is installed globally."
-                warn "Try again with the --global (or -g) flag instead."
+
+            if ($App -eq '.') { # current directory
+                abort "$App is not a package."
+                throw
+            }
+            elseif ($App -eq '..') { # parent directory
+                abort "$App is not a package."
+                throw
+            }
+
+            if ($Global) {
+                if (installed $App $true) {
+                    $Installed += ,@($App, $true)
+                } elseif (installed $App $false) {
+                    error "'$App' isn't installed globally, but it is installed for your account."
+                    warn "Try again without the --global (or -g) flag instead."
+                } else {
+                    error "'$App' isn't installed."
+                }
             } else {
-                error "'$App' isn't installed."
+                if(installed $App $false) {
+                    $Installed += ,@($App, $false)
+                } elseif (installed $App $true) {
+                    error "'$App' isn't installed for your account, but it is installed globally."
+                    warn "Try again with the --global (or -g) flag instead."
+                } else {
+                    error "'$App' isn't installed."
+                }
             }
         }
-    }
     return ,$Installed
 }
 
@@ -944,6 +962,19 @@ function parse_app([string] $app) {
         return $matches['app'], $matches['bucket'], $matches['version']
     }
     return $app, $null, $null
+}
+
+function Test-IsValidScoopAppName([string] $name) {
+    if ($name -eq '.') {
+        return $false
+    }
+    if ($name -eq '..') {
+        return $false
+    }
+    if ($name -match '[\\/]') {
+        retutn $false
+    }
+    return $true
 }
 
 function show_app($app, $bucket, $version) {

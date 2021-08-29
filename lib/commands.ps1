@@ -102,11 +102,15 @@ function Convert-ScoopCommandsInfoArrayToHashtable {
 function Invoke-ScoopCommand {
     param (
         [Parameter(Mandatory=$true)]
-        [Hashtable] $CommandsInfo,
+        [Hashtable] $CommandInfo,
         [string[]] $Arguments
     )
 
-    & $CommandsInfo.File.FullName @arguments
+    & $CommandInfo.File.FullName @arguments
+
+    if ($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
 }
 
 function command_files {
@@ -139,10 +143,4 @@ function command_path($cmd) {
     }
 
     $cmd_path
-}
-
-function exec($cmd, $arguments) {
-    $cmd_path = command_path $cmd
-
-    & $cmd_path @arguments
 }

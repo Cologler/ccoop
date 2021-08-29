@@ -20,6 +20,11 @@ you can use `scoop *` to call them now.
 
 They have high priority.
 
+### Fixes
+
+- Won't remove all package when you run `scoop uninstall .`;
+- Won't remove current version package when you run `scoop cleanup .`;
+
 ### Performance
 
 - Ccoop is faster, because it only run scripts (like `core.ps1`) once;
