@@ -107,6 +107,10 @@ function Invoke-ScoopCommand {
     )
 
     & $CommandInfo.File.FullName @arguments
+
+    if ($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
 }
 
 function command_files {
