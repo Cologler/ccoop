@@ -1,3 +1,5 @@
+using namespace System.IO;
+
 # ensure only run once:
 if (Get-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -ErrorAction SilentlyContinue) {
     exit
@@ -11,15 +13,18 @@ if (Get-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -ErrorAction 
 function Get-ScoopShimTarget {
     param (
         [parameter(Mandatory=$true)]
-        [string] $shimFile
+        [FileInfo] $shimFile
     )
 
-    if (!(Test-Path -Path $shimFile -PathType Leaf)) {
-        throw "Shim file $shimFile does not exist."
+    if (!$shimFile.exists) {
+        throw "Target of shim file $shimFile does not exist."
     }
 
     if ($shimFile -match '\.ps1$') {
-        $fileContent = Get-Content $shimFile
+        # on powershell 5,
+        # get-content does not accept a `FileInfo` object
+        # by default, it will convert to $shimFile.Name instead of $shimFile.FullName
+        $fileContent = Get-Content $shimFile.FullName
         $line = $fileContent | Where-Object { $_.StartsWith('$path = join-path "$psscriptroot"') }
         if ($line) {
             $relpath = Invoke-Expression $line.Substring('$path = join-path "$psscriptroot"'.Length)

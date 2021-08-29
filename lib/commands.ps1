@@ -40,14 +40,14 @@ function Get-ScoopCommandsInfoArray {
 
     return $builtins + $external | foreach-object {
         # parse name before resolve
-        $_.Name = Get-ScoopCommandName $_.File.FullName
+        $_.Name = Get-ScoopCommandName $_.File
 
         if ($ResolveTarget) {
             if ($_.IsBuiltin) {
                 $_.TargetFile = $_.file
             }
             elseif ($_.IsExternal) {
-                $_.TargetFile = Get-ScoopShimTarget $_.File.FullName
+                $_.TargetFile = Get-ScoopShimTarget $_.File
             }
         }
 
