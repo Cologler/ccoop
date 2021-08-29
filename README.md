@@ -6,7 +6,6 @@ Ccoop is my forked version of [Scoop](https://github.com/lukesampson/scoop).
 
 ### Features
 
-- Won't [breaking working directory if we cancel the update](https://github.com/lukesampson/scoop/issues/4358);
 - Also cleanup buckets when run `scoop cleanup`;
 - `scoop list --json` write json to stdout;
 - use `scoop config autoupdate false` to disable auto update;
@@ -24,6 +23,7 @@ They have higher priority.
 
 - Won't remove all package when you run `scoop uninstall .`;
 - Won't remove current version package when you run `scoop cleanup .`;
+- Won't [breaking working directory if you cancel the update](https://github.com/lukesampson/scoop/issues/4358);
 
 ### Performance
 
