@@ -1,6 +1,13 @@
 # the core.ps1 does not allow to reference other script
 # because it run via install scoop script
 
+# ensure only run once:
+if (Get-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -ErrorAction SilentlyContinue) {
+    exit
+} else {
+    Set-Variable -Name "scoop:run:$($MyInvocation.MyCommand.Path)" -Value $true
+}
+
 # constants part
 # the package manager name, will be rename to 'ccoop' in the future
 $ScoopName = 'Scoop'
