@@ -15,10 +15,10 @@ Ccoop is my forked version of [Scoop](https://github.com/lukesampson/scoop).
 
 #### Dispatch External First
 
-When you install `scoop-*` like packages ([scoop-search](https://github.com/tokiedokie/scoop-search)),
+When you installed `scoop-*` like packages ([scoop-search](https://github.com/tokiedokie/scoop-search)),
 you can use `scoop *` to call them now.
 
-They have high priority.
+They have higher priority.
 
 ### Fixes
 
