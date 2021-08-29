@@ -140,9 +140,3 @@ function command_path($cmd) {
 
     $cmd_path
 }
-
-function exec($cmd, $arguments) {
-    $cmd_path = command_path $cmd
-
-    & $cmd_path @arguments
-}
