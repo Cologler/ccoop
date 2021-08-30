@@ -32,10 +32,24 @@ if ('--version' -contains $cmd -or (!$cmd -and '-v' -contains $args)) {
         Pop-Location
     }
 }
-elseif (@($null, '--help', '/?') -contains $cmd -or $args[0] -contains '-h') {
-    Invoke-ScoopCommand $commandsInfoMap['help'] $args
+elseif ($null -eq $cmd) {
+    Invoke-ScoopCommand $commandsInfoMap['help']
 }
 elseif ($commandsInfoMap.ContainsKey($cmd)) {
+    $cmdinfo = $commandsInfoMap[$cmd]
+
+    if ($cmdinfo.IsBuiltin) {
+        if (@('--help', '/?', '-h') -contains $cmd) {
+            Invoke-ScoopCommand $commandsInfoMap['help']
+            return
+        }
+
+        if ($args -contains '-h') {
+            Invoke-ScoopCommand $commandsInfoMap['help'] $cmd
+            return
+        }
+    }
+
     Invoke-ScoopCommand $commandsInfoMap[$cmd] $args
 }
 else { "scoop: '$cmd' isn't a scoop command. See 'scoop help'."; exit 1 }
