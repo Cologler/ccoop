@@ -990,11 +990,11 @@ function show_app($app, $bucket, $version) {
 function last_scoop_update() {
     # PowerShell 6 returns an DateTime Object
     $last_update = (scoop config lastupdate)
-
-    if ($null -ne $last_update -and $last_update.GetType() -eq [System.String]) {
-        try {
-            $last_update = [System.DateTime]::Parse($last_update)
-        } catch {
+    if ($last_update -isnot [datetime] -and $null -ne $last_update) {
+        if ($last_update -is [string]) {
+            $last_update = [datetime]::Parse($last_update)
+        }
+        else { # unknown value
             $last_update = $null
         }
     }
