@@ -30,7 +30,9 @@ $usage_add = "usage: scoop bucket add <name> [<repo>]"
 $usage_rm = "usage: scoop bucket rm <name>"
 
 switch($cmd) {
-    'add' { add_bucket $name $repo }
+    'add' {
+        Add-ScoopBucket $name $repo
+    }
     'rm' { rm_bucket $name }
     'list' { Get-LocalBucket }
     'known' { known_buckets }
