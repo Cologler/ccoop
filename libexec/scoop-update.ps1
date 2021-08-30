@@ -66,7 +66,7 @@ function update_scoop() {
     $show_update_log = get_config 'show_update_log' $true
     $currentdir = fullpath $(versiondir 'scoop' 'current')
 
-    if ((Get-Item $currentdir).LinkType -eq 'SymbolicLink') {
+    if (Test-IsSoftLink $currentdir) {
         # editable mode like python (pip install -e) or node (npm link)
         # helpful for developer.
         Write-Output "$ScoopName is installed in editable mode, update is ignored."
@@ -141,6 +141,12 @@ function update_scoop() {
         write-host "Updating '$_' bucket..."
 
         $loc = Find-BucketDirectory $_ -Root
+
+        if (Test-IsSoftLink $loc) {
+            Write-Host "Bucket '$_' is installed in editable mode, update is ignored."
+            return
+        }
+
         # Make sure main bucket, which was downloaded as zip, will be properly "converted" into git
         if (($_ -eq 'main') -and !(Test-Path "$loc\.git")) {
             rm_bucket 'main'
