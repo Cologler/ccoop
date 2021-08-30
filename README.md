@@ -32,3 +32,4 @@ They have higher priority.
 ### For Developers
 
 - Install Ccoop in editable mode is possiable;
+- Add bucket in editable mode if `repo` set to local directory;
