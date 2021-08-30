@@ -81,6 +81,34 @@ function find_manifest($app, $bucket) {
     }
 }
 
+function Add-ScoopBucket([string] $name, [string] $repo) {
+    if (!$name) {
+        "<name> missing";
+        $usage_add;
+        exit 1
+    }
+
+    if (!(Test-IsValidScoopBucketName $name)) {
+        Write-Output "Invaild bucket name: '$name'"
+        exit 1
+    }
+
+    $bucketDir = "$bucketsdir\$name"
+    if (Test-Path $bucketDir) {
+        warn "The '$name' bucket already exists. Use 'scoop bucket rm $name' to remove it."
+        exit 1
+    }
+
+    if (Test-Path $repo -PathType Container) {
+        # add bucket in editable mode
+        New-Junction $repo $bucketDir
+    }
+    else {
+        # add bucket in git repo
+        add_bucket $name $repo
+    }
+}
+
 function add_bucket($name, $repo) {
     if (!$name) { "<name> missing"; $usage_add; exit 1 }
     if (!$repo) {

@@ -1,3 +1,5 @@
+using namespace System.IO;
+
 # the core.ps1 does not allow to reference other script
 # because it run via install scoop script
 
@@ -511,6 +513,28 @@ function isFileLocked([string]$path) {
     }
 }
 
+function New-Junction([string] $src, [string] $dest) {
+    # https://superuser.com/questions/343074/directory-junction-vs-directory-symbolic-link
+    # https://stackoverflow.com/questions/9042542/what-is-the-difference-between-ntfs-junction-points-and-symbolic-links
+
+    # junctions are processed at the server
+
+    $src = [Path]::GetFullPath($src)
+    $dest = [Path]::GetFullPath($dest)
+    Write-Output "Creating junction $dest -> $src"
+    New-Item -ItemType 'Junction' -Path $dest -Value $src > $null
+}
+
+function Test-IsSoftLink([string] $path) {
+    # for test is scoop or bucket is in editable mode
+
+    if (@('Junction', 'SymbolicLink') -contains (Get-Item $path).LinkType) {
+        return $true
+    } else {
+        return $false
+    }
+}
+
 function is_directory([String] $path) {
     return (Test-Path $path) -and (Get-Item $path) -is [System.IO.DirectoryInfo]
 }
@@ -964,7 +988,10 @@ function parse_app([string] $app) {
     return $app, $null, $null
 }
 
-function Test-IsValidScoopAppName([string] $name) {
+function Test-IsValidScoopEntryName([string] $name) {
+    if (!$name) {
+        return $false
+    }
     if ($name -eq '.') {
         return $false
     }
@@ -976,6 +1003,9 @@ function Test-IsValidScoopAppName([string] $name) {
     }
     return $true
 }
+# to ensure we can override it, add alias:
+New-Alias -Name Test-IsValidScoopBucketName -Value Test-IsValidScoopEntryName
+New-Alias -Name Test-IsValidScoopAppName -Value Test-IsValidScoopEntryName
 
 function show_app($app, $bucket, $version) {
     if($bucket) {
