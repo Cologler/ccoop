@@ -79,7 +79,7 @@ try {
     success 'Scoop was installed successfully!'
 
     Write-Output "Type 'scoop help' for instructions."
-
+}
 finally {
     $ErrorActionPreference = $oldErrorActionPreference # Reset $ErrorActionPreference to original value
 }
