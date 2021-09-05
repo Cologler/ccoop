@@ -690,7 +690,7 @@ function New-Shim {
     }
 }
 
-function New-ScoopShimToScoop([string] $name, [bool] $global) {
+function New-ScoopShimToScoop([string] $name) {
     if (!$name) {
         $name = $ScoopName
     }
@@ -704,7 +704,7 @@ function New-ScoopShimToScoop([string] $name, [bool] $global) {
         'bin',
         "$name.ps1"
     )
-    $shimdir = shimdir $global
+    $shimdir = shimdir $false
 
     New-Shim $target $shimdir `
         -name $name `

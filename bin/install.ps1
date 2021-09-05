@@ -29,23 +29,25 @@ $oldErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = 'stop' # quit if anything goes wrong
 
 try {
+    $ScoopName = 'Ccoop'
+
     # get core functions
-    $core_url = 'https://raw.githubusercontent.com/lukesampson/scoop/master/lib/core.ps1'
+    $core_url = 'https://raw.githubusercontent.com/Cologler/ccoop/master/lib/core.ps1'
     Write-Output 'Initializing...'
     Invoke-Expression (new-object net.webclient).downloadstring($core_url)
 
     # prep
-    if (installed 'scoop') {
-        write-host "Scoop is already installed. Run 'scoop update' to get the latest version." -f red
+    if (installed $ScoopName) {
+        write-host "$ScoopName is already installed. Run '$($ScoopName.ToLower()) update' to get the latest version." -f red
         # don't abort if invoked with iex that would close the PS session
         if ($myinvocation.mycommand.commandtype -eq 'Script') { return } else { exit 1 }
     }
-    $scoopCurrentDir = ensure (versiondir 'scoop' 'current')
+    $scoopCurrentDir = ensure (versiondir $ScoopName 'current')
 
     # download scoop zip
-    $zipurl = 'https://github.com/lukesampson/scoop/archive/master.zip'
-    $zipfile = "$scoopCurrentDir\scoop.zip"
-    Write-Output 'Downloading scoop...'
+    $zipurl = 'https://github.com/Cologler/ccoop/archive/master.zip'
+    $zipfile = "$scoopCurrentDir\$ScoopName.zip"
+    Write-Output "Downloading $ScoopName..."
     dl $zipurl $zipfile
 
     Write-Output 'Extracting...'
@@ -55,7 +57,7 @@ try {
     Remove-Item "$scoopCurrentDir\_tmp", $zipfile -Recurse -Force
 
     Write-Output 'Creating shim...'
-    shim "$scoopCurrentDir\bin\scoop.ps1" $false
+    New-ScoopShimToScoop
 
     # download main bucket
     $scoopCurrentDir = "$scoopdir\buckets\main"
@@ -77,7 +79,6 @@ try {
     success 'Scoop was installed successfully!'
 
     Write-Output "Type 'scoop help' for instructions."
-    }
 
 finally {
     $ErrorActionPreference = $oldErrorActionPreference # Reset $ErrorActionPreference to original value

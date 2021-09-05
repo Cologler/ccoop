@@ -26,7 +26,7 @@ if($apps -eq '*') {
 
 function ResetScoop([string] $app, [bool] $global) {
     # does scoop able install to global?
-    New-ScoopShimToScoop -name $app -global $global
+    New-ScoopShimToScoop -name $app
 }
 
 $apps | ForEach-Object {
