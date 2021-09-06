@@ -31,7 +31,42 @@ $ErrorActionPreference = 'stop' # quit if anything goes wrong
 $ScoopName = 'Ccoop'
 $ScoopRemoteCoreLibUrl = 'https://raw.githubusercontent.com/Cologler/ccoop/master/lib/core.ps1'
 $ScoopRemoteRepoZipUrl = 'https://github.com/Cologler/ccoop/archive/master.zip'
+$ScoopMainBucketName   = 'main'
 $ScoopMainBucketUrl    = 'https://github.com/ScoopInstaller/Main/archive/master.zip'
+
+function Add-MainBucketAtomic {
+    $bucketsDir             = Join-Path $scoopdir 'buckets'
+    $mainBucketDir          = Join-Path $bucketsDir $ScoopMainBucketName
+    $mainBucketTempZipFile  = Join-Path $bucketsDir ($ScoopMainBucketName + '$temp.zip')
+    $mainBucketTempDir      = Join-Path $bucketsDir ($ScoopMainBucketName + '$temp')
+
+    if (Test-Path $mainBucketDir) {
+        if (!(Test-Path $mainBucketTempZipFile)) {
+            # installed
+            return;
+        } else {
+            Remove-Item $mainBucketTempZipFile
+        }
+    }
+
+    # download main bucket
+    Write-Output 'Downloading main bucket...'
+    if (Test-Path $mainBucketTempZipFile) {
+        Remove-Item $mainBucketTempZipFile
+    }
+    dl $ScoopMainBucketUrl $mainBucketTempZipFile
+
+    Write-Output 'Extracting...'
+    if (Test-Path $mainBucketTempDir) {
+        Remove-Item $mainBucketTempDir -Recurse -Force
+    }
+    [IO.Compression.ZipFile]::ExtractToDirectory($mainBucketTempZipFile, $mainBucketTempDir)
+
+    New-Item $mainBucketDir -Type Directory -Force | Out-Null
+    Copy-Item "$mainBucketTempDir\*-master\*" $mainBucketDir -Recurse -Force
+
+    Remove-Item $mainBucketTempDir, $mainBucketTempZipFile -Recurse -Force
+}
 
 try {
 
@@ -62,16 +97,7 @@ try {
     New-ScoopShimToScoop
 
     # download main bucket
-    $scoopCurrentDir = "$scoopdir\buckets\main"
-    $zipfile = "$scoopCurrentDir\main-bucket.zip"
-    Write-Output 'Downloading main bucket...'
-    New-Item $scoopCurrentDir -Type Directory -Force | Out-Null
-    dl $ScoopMainBucketUrl $zipfile
-
-    Write-Output 'Extracting...'
-    [IO.Compression.ZipFile]::ExtractToDirectory($zipfile, "$scoopCurrentDir\_tmp")
-    Copy-Item "$scoopCurrentDir\_tmp\*-master\*" $scoopCurrentDir -Recurse -Force
-    Remove-Item "$scoopCurrentDir\_tmp", $zipfile -Recurse -Force
+    Add-MainBucketAtomic
 
     ensure_robocopy_in_path
     ensure_scoop_in_path
