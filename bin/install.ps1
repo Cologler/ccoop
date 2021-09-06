@@ -30,11 +30,13 @@ $ErrorActionPreference = 'stop' # quit if anything goes wrong
 
 try {
     $ScoopName = 'Ccoop'
+    $ScoopRemoteCoreLibUrl = 'https://raw.githubusercontent.com/Cologler/ccoop/master/lib/core.ps1'
+    $ScoopRemoteRepoZipUrl = 'https://github.com/Cologler/ccoop/archive/master.zip'
+    $ScoopMainBucketUrl    = 'https://github.com/ScoopInstaller/Main/archive/master.zip'
 
     # get core functions
-    $core_url = 'https://raw.githubusercontent.com/Cologler/ccoop/master/lib/core.ps1'
     Write-Output 'Initializing...'
-    Invoke-Expression (new-object net.webclient).downloadstring($core_url)
+    Invoke-Expression (new-object net.webclient).downloadstring($ScoopRemoteCoreLibUrl)
 
     # prep
     if (installed $ScoopName) {
@@ -45,10 +47,9 @@ try {
     $scoopCurrentDir = ensure (versiondir $ScoopName 'current')
 
     # download scoop zip
-    $zipurl = 'https://github.com/Cologler/ccoop/archive/master.zip'
     $zipfile = "$scoopCurrentDir\$ScoopName.zip"
     Write-Output "Downloading $ScoopName..."
-    dl $zipurl $zipfile
+    dl $ScoopRemoteRepoZipUrl $zipfile
 
     Write-Output 'Extracting...'
     Add-Type -Assembly "System.IO.Compression.FileSystem"
@@ -61,11 +62,10 @@ try {
 
     # download main bucket
     $scoopCurrentDir = "$scoopdir\buckets\main"
-    $zipurl = 'https://github.com/ScoopInstaller/Main/archive/master.zip'
     $zipfile = "$scoopCurrentDir\main-bucket.zip"
     Write-Output 'Downloading main bucket...'
     New-Item $scoopCurrentDir -Type Directory -Force | Out-Null
-    dl $zipurl $zipfile
+    dl $ScoopMainBucketUrl $zipfile
 
     Write-Output 'Extracting...'
     [IO.Compression.ZipFile]::ExtractToDirectory($zipfile, "$scoopCurrentDir\_tmp")
