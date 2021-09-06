@@ -28,11 +28,12 @@ if ([System.Enum]::GetNames([System.Net.SecurityProtocolType]) -notcontains 'Tls
 $oldErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = 'stop' # quit if anything goes wrong
 
+$ScoopName = 'Ccoop'
+$ScoopRemoteCoreLibUrl = 'https://raw.githubusercontent.com/Cologler/ccoop/master/lib/core.ps1'
+$ScoopRemoteRepoZipUrl = 'https://github.com/Cologler/ccoop/archive/master.zip'
+$ScoopMainBucketUrl    = 'https://github.com/ScoopInstaller/Main/archive/master.zip'
+
 try {
-    $ScoopName = 'Ccoop'
-    $ScoopRemoteCoreLibUrl = 'https://raw.githubusercontent.com/Cologler/ccoop/master/lib/core.ps1'
-    $ScoopRemoteRepoZipUrl = 'https://github.com/Cologler/ccoop/archive/master.zip'
-    $ScoopMainBucketUrl    = 'https://github.com/ScoopInstaller/Main/archive/master.zip'
 
     # get core functions
     Write-Output 'Initializing...'
