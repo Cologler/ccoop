@@ -14,27 +14,29 @@ reset_aliases
 $currentdir = fullpath $(versiondir 'scoop' 'current')
 $needs_update = $false
 
-if(test-path "$currentdir\.git") {
-    Push-Location $currentdir
-    try {
-        git_fetch -q origin
-        $commits = $(git log "HEAD..origin/$(scoop config SCOOP_BRANCH)" --oneline)
-        if ($commits) {
-            $needs_update = $true
+if (!(Test-IsSoftLink $currentdir)) {
+    if(test-path "$currentdir\.git") {
+        Push-Location $currentdir
+        try {
+            git_fetch -q origin
+            $commits = $(git log "HEAD..origin/$(scoop config SCOOP_BRANCH)" --oneline)
+            if ($commits) {
+                $needs_update = $true
+            }
+        }
+        finally {
+            Pop-Location
         }
     }
-    finally {
-        Pop-Location
+    else {
+        $needs_update = $true
     }
-}
-else {
-    $needs_update = $true
-}
 
-if($needs_update) {
-    warn "Scoop is out of date. Run 'scoop update' to get the latest changes."
+    if($needs_update) {
+        warn "Scoop is out of date. Run 'scoop update' to get the latest changes."
+    }
+    else { success "Scoop is up to date."}
 }
-else { success "Scoop is up to date."}
 
 $failed = @()
 $outdated = @()
