@@ -2,6 +2,14 @@
 
 Ccoop is my forked version of [Scoop](https://github.com/lukesampson/scoop).
 
+## How To Use
+
+After installed `scoop`, type command to switch to `ccoop`:
+
+``` powershell
+scoop config SCOOP_REPO "https://github.com/Cologler/ccoop.git"
+```
+
 ## Different from Scoop
 
 ### Features
