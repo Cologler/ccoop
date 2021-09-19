@@ -670,7 +670,7 @@ function New-Shim {
                 AppendLine("    `$shellPath = Join-Path `"`$PSHOME/`" 'powershell.exe'").
                 AppendLine("}") > $null
 
-            $ps1exec = "`$shellPath $ps1scmd"
+            $ps1exec = "`$shellPath -NoProfile $ps1scmd"
         }
         elseif ($targetFile -match '\.jar$') {
             $ps1exec = "java -jar $ps1scmd"
