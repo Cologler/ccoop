@@ -1019,7 +1019,7 @@ function show_app($app, $bucket, $version) {
 
 function last_scoop_update() {
     # PowerShell 6 returns an DateTime Object
-    $last_update = (scoop config lastupdate)
+    $last_update = (get_config lastupdate)
     if ($last_update -isnot [datetime] -and $null -ne $last_update) {
         if ($last_update -is [string]) {
             $last_update = [datetime]::Parse($last_update)
