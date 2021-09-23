@@ -1017,22 +1017,21 @@ function show_app($app, $bucket, $version) {
     return $app
 }
 
-function last_scoop_update() {
-    # PowerShell 6 returns an DateTime Object
-    $last_update = (get_config lastupdate)
-    if ($last_update -isnot [datetime] -and $null -ne $last_update) {
-        if ($last_update -is [string]) {
-            $last_update = [datetime]::Parse($last_update)
-        }
-        else { # unknown value
-            $last_update = $null
-        }
+function ConvertTo-DateTime($date) {
+    if ($null -eq $date) {
+        return $null
     }
-    return $last_update
+    if ($date -is [datetime]) {
+        return $date
+    }
+    if ($date -is [string]) {
+        return [datetime]::Parse($last_update)
+    }
+    throw "unknown datetime type: $($date.GetType().Name)"
 }
 
-function is_scoop_outdated() {
-    $last_update = $(last_scoop_update)
+function Test-IsScoopOutdated() {
+    $last_update = ConvertTo-DateTime (get_config lastupdate)
     $now = [System.DateTime]::Now
     if($null -eq $last_update) {
         scoop config lastupdate $now.ToString('o')

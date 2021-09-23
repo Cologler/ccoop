@@ -306,7 +306,7 @@ if (!$apps) {
         'ERROR: You need admin rights to update global apps.'; exit 1
     }
 
-    if (is_scoop_outdated) {
+    if (Test-IsScoopOutdated) {
         if (get_config 'autoupdate' $true) {
             update_scoop
         } else {
