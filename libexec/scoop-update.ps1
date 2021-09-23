@@ -306,12 +306,8 @@ if (!$apps) {
         'ERROR: You need admin rights to update global apps.'; exit 1
     }
 
-    if (Test-IsScoopOutdated) {
-        if (get_config 'autoupdate' $true) {
-            update_scoop
-        } else {
-            warn "Scoop is outdated."
-        }
+    if (Test-IsScoopNeedUpdate -WithWarning) {
+        update_scoop
     }
 
     $outdated = @()

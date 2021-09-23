@@ -51,7 +51,9 @@ if($err) { "scoop virustotal: $err"; exit 1 }
 if(!$apps) { my_usage; exit 1 }
 $architecture = ensure_architecture ($opt.a + $opt.arch)
 
-if(Test-IsScoopOutdated) { scoop update }
+if (Test-IsScoopNeedUpdate -WithWarning) {
+    scoop update
+}
 
 $apps_param = $apps
 

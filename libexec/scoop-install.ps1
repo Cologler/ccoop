@@ -92,12 +92,8 @@ if ($global -and !(is_admin)) {
     abort 'ERROR: you need admin rights to install global apps'
 }
 
-if (Test-IsScoopOutdated) {
-    if (get_config 'autoupdate' $true) {
-        scoop update
-    } else {
-        warn "Scoop is outdated."
-    }
+if (Test-IsScoopNeedUpdate -WithWarning) {
+    scoop update
 }
 
 $appStatus = $appNames | ForEach-Object { Get-AppInstallStatus $_ $global }

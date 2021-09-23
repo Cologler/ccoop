@@ -1041,6 +1041,17 @@ function Test-IsScoopOutdated() {
     return $last_update.AddHours($ScoopOutdated_Hours) -lt $now.ToLocalTime()
 }
 
+function Test-IsScoopNeedUpdate([switch] $withWarning) {
+    if (Test-IsScoopOutdated) {
+        if (get_config 'autoupdate' $true) {
+            return $true
+        } elseif ($withWarning) {
+            warn "Scoop is outdated."
+        }
+    }
+    return $false
+}
+
 function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
     if ($entity -is [Array]) {
         return $entity | ForEach-Object { substitute $_ $params $regexEscape}
