@@ -1025,7 +1025,7 @@ function ConvertTo-DateTime($date) {
         return $date
     }
     if ($date -is [string]) {
-        return [datetime]::Parse($last_update)
+        return [datetime]::Parse($date)
     }
     throw "unknown datetime type: $($date.GetType().Name)"
 }
